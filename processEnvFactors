@@ -1,0 +1,65 @@
+#!/opt/anaconda3/envs/gdal/bin/python
+
+import sys, argparse
+from pathlib import Path
+from EnvFactors import *
+
+INSTALL_DIR = r'/home/centos/CVT-CGA/'
+DATA_DIR = r'/home/centos/data/covid19/'
+csvs_dir = os.path.join(INSTALL_DIR, 'RESULT_CSVS', '')
+shapefiles_dir = os.path.join(INSTALL_DIR, 'shapefiles', '')
+
+env_factors = {'NO2': EnvironmentFactor(
+                    'NO2',
+                    os.path.join(DATA_DIR, 'OMNO2d.003', ''),
+                    'OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-',
+                    [DataType('ColumnAmountNO2', name='amt'),
+                      DataType('ColumnAmountNO2CloudScreened', name='screened'),
+                      DataType('ColumnAmountNO2Trop', name='trop'),
+                      DataType('ColumnAmountNO2TropCloudScreened', name='trop_screened'),
+                      DataType('Weight', name='weight')]),
+              'Humidity': EnvironmentFactor(
+                    'Humidity',
+                    os.path.join(DATA_DIR, 'temperature_humidity', 'daily', 'humidity', ''),
+                    'daily_MEAN_%Y%m%d.nc4',
+                    [DataType('daily_QV2M', (0.625, 0.5))]),
+              'Temper_T2MMEAN': EnvironmentFactor(
+                    'Temper_T2MMEAN',
+                    os.path.join(DATA_DIR, 'temperature_humidity', 'daily', 'Temperature', ''),
+                    'daily_MEAN_T_%Y%m%d.nc4',
+                    [DataType('daily_T2M', (0.625, 0.5))]),
+              'Precipitation': EnvironmentFactor(
+                    'Precipitation',
+                    os.path.join(DATA_DIR, 'precipitation', 'daily', ''),
+                    'daily_precipitation_%Y%m%d.nc4',
+                    [DataType('daily_precipitation', (0.1, 0.1))])}
+
+def processAllFiles(regex_extension):
+    for ef in env_factors:
+        all_files = list(Path(env_factors[ef].data_directory).rglob(regex_extension))
+        print('Processing {} on {} files.'.format(ef, all_files))
+        env_factors[ef].process(all_files, shapefiles_dir, csvs_dir)
+
+def processFilesFrom(ef, inputFile):
+    with open(inputFile, "r") as f:
+        latestFiles = [file.strip() for file in f.readlines()]
+        f.close()
+    env_factors[ef].process(latestFiles, shapefiles_dir, csvs_dir)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a','--all', action="store_true", dest="all")
+    parser.add_argument('-f','--environmental-factor', action="store", dest="factor")
+    parser.add_argument('-d','--data-dir', action="store", dest="data_dir")
+    args = parser.parse_args(sys.argv[1:])
+
+    if (args.all):
+        print("Processing all files")
+        processAllFiles('*.nc4')
+        processAllFiles('*.he5')
+    else:
+        if (args.factor == None or args.data_dir == None):
+            parser.print_help(sys.stderr)
+            sys.exit(2)
+        print("Processing factor {} with file names in {}".format(args.factor, args.data_dir))
+        processFilesFrom(args.factor, args.data_dir)
