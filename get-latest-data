@@ -1,0 +1,96 @@
+#!/bin/bash
+
+FILENAME=
+regex=
+INSTALL_DIR=$(dirname $0)
+DATA_DIR="/home/centos/data/covid19"
+if test -f "~/.dataproc.env" ; then
+  . ~/.dataproc.env
+fi
+
+MERRA_path=${DATA_DIR}/temperature_humidity/hourly/
+OMI_AURA_path=${DATA_DIR}/OMNO2d_003/
+HDF5_path=${DATA_DIR}/precipitation/hourly_hdf5/
+
+get_data()
+{
+  if test -z "$2";
+  then
+    echo "No data currently exists at $4"
+    echo "To get all current data, run"
+    echo "${INSTALL_DIR}/get-nasa-data --username [your NASA username] --password [your NASA password] -l $3 --matches="*" -o $4"
+    exit 2
+  fi
+  output=$(${INSTALL_DIR}/next-filename -f "$2" -e "$1" -d $5 "$3")
+  new_name=$(echo ${output} | cut -d '|' -f1)
+  new_url=$(echo ${output} | cut -d '|' -f2)
+  ${INSTALL_DIR}/get-nasa-data --username "Synyster" --password "Jaiganesh01$" -l ${new_url} --matches="*${new_name}*" -o $4 >> /tmp/data.log 2>&1
+}
+
+get_latest_data()
+{
+  # Get temperature and humidity data from NASA archives
+  data_path=$1
+  grep_exp=$2
+  # Define a regular expression that specifies the location of the date/time information in the URL to retrieve data
+  URL=$3
+  # Define a regular expression that specifies the location of the date/time information in data file names
+  regex=$4
+
+  duration=$5
+  if test -z "${duration}";
+  then
+    let duration=1*24*60;
+  fi
+
+  # Clear the txt file so that yesterday's files are not processed again
+  txt_file="${data_path}/new_files.txt"
+
+  while true;
+  do
+    prev_tail=$(ls ${data_path} | grep "${grep_exp}" | grep -v "new_files_" | tail -1)
+    # Get the data satisfying the regexes, specifying a duration of 30 minutes for precipitation data since it is recorded for every half hour interval and one day for everything else
+    get_data "${regex}" "${prev_tail}" "${URL}" "${data_path}" "${duration}"
+    new_tail=$(ls ${data_path} | grep "${grep_exp}" | grep -v "new_files_" | tail -1)
+    # If no new files were downloaded, exit the loop and move to data processing, otherwise put them in the txt file to be processed
+    if test "${prev_tail}" == "${new_tail}";
+    then
+      break;
+    else
+      echo "${data_path}${new_tail}" >> "${txt_file}"
+    fi
+  done
+}
+
+# Clear the data log from yesterday's collection/processing
+> /tmp/data.log
+
+# Run the above functions
+get_latest_data ${MERRA_path} "MERRA2_400" "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/MERRA2/M2T1NXSLV.5.12.4/%Y/%m/" "MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d.nc4"
+get_latest_data ${OMI_AURA_path} "OMI-Aura_L3" "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aura_OMI_Level3/OMNO2d.003/%Y/" "OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-"
+get_latest_data ${HDF5_path} "3B-HHR-E" "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.06/%Y/%j/" "3B-HHR-E.MS.MRG.3IMERG.%Y%m%d-S%H%M%S" 30
+
+# Activate the created gdal environment, which has python 3.8 installed
+eval "$(conda shell.bash hook)"
+conda activate gdal
+
+# Process the data
+echo -e "\n================ PROCESSING DATA ================\n" >> /tmp/data.log
+/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_temperature >> /tmp/data.log 2>&1
+/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_humidity >> /tmp/data.log 2>&1
+/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_precipitation >> /tmp/data.log 2>&1
+
+
+#echo -e "\n================ CONVERTING DATA TO CSV ================\n" >> /tmp/data.log
+#/home/centos/bin/processEnvFactors -f 'NO2' -d '${DATA_DIR}/OMNO2d.003/daily/new_files.txt' >> /tmp/data.log 2>&1
+#/home/centos/bin/processEnvFactors -f 'Humidity' -d '${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt' >> /tmp/data.log 2>&1
+#/home/centos/bin/processEnvFactors -f 'Temper_T2MMEAN' -d '${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt' >> /tmp/data.log 2>&1
+#/home/centos/bin/processEnvFactors -f 'Precipitation' -d '${DATA_DIR}/precipitation/daily/new_files.txt' >> /tmp/data.log 2>&1
+
+> "${MERRA_path}/new_files.txt"
+> "${HDF5_path}/new_files.txt"
+> "${OMI_AURA_path}/new_files.txt"
+#> '${DATA_DIR}/OMNO2d.003/daily/new_files.txt'
+#> '${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt'
+#> '${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt'
+#> '${DATA_DIR}/precipitation/daily/new_files.txt'

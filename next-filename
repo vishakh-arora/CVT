@@ -1,0 +1,22 @@
+#!/opt/anaconda3/envs/gdal/bin/python
+
+import sys, argparse
+from datetime import datetime, timedelta
+import getopt
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-e','--expression', action="store", dest="exp")
+parser.add_argument('-f','--filename', action="store", dest="fname")
+parser.add_argument('-d','--duration-mins', action="store", type=int, dest="duration")
+parser.add_argument('url', action="store")
+args = parser.parse_args(sys.argv[1:])
+
+exp = args.exp
+# Cut off any excess that is unique for each file
+fname = args.fname[:len(exp)+2]
+
+new_date = datetime.strptime(fname, exp) + timedelta(minutes=args.duration)
+
+output = [new_date.strftime(exp), new_date.strftime(args.url)]
+
+print('|'.join(output))
