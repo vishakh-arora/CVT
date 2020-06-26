@@ -62,6 +62,7 @@ class HE5(InputFile):
         ---
         Output Numpy Array
         """
+        print(self.filename)
         with h5py.File(self.filename, "r") as f:
             ds = np.array(f['HDFEOS']['GRIDS']['ColumnAmountNO2']['Data Fields'][dataset])
         return ds

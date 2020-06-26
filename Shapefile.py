@@ -35,13 +35,16 @@ class Shapefile:
                     out_data.append(values[i][j])
 
         values = np.array(out_data)
+        if (len(values) == 0):
+            return [shp_name, 0, 0, 0]
+
         maxes = values.max()
         means = values.mean()
         mins = values.min()
 
         return [shp_name, maxes, means, mins]
 
-    def read_shape_file(self, datatype, rasterdata, data):
+    def read_shape_file(self, datatype, rasterdata, data, minVal):
         """
         Read shapefile and clean contents
         ---
@@ -57,7 +60,10 @@ class Shapefile:
         xy_values = [[self.attribute, 'Max', 'Mean', 'Min']]
 
         # delete errors
-        min_data = data[~np.isnan(data)].min()
+        if (minVal == None):
+            min_data = data[~np.isnan(data)].min()
+        else:
+            min_data = minVal
         max_data = data[~np.isnan(data)].max()
 
         # loop through the shape data

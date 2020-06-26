@@ -6,11 +6,12 @@ from Shapefile import *
 from FileIO import *
 
 class EnvironmentFactor:
-    def __init__(self, name, data_directory, date_format, arr_data_types):
+    def __init__(self, name, data_directory, date_format, arr_data_types, minVal=None):
         self.name = name
         self.data_directory = data_directory
         self.date_format = date_format
         self.data_types = arr_data_types
+        self.minVal = minVal
 
     def process(self, file_list, shapefiles_dir, output_dir):
         """
@@ -40,7 +41,7 @@ class EnvironmentFactor:
 
                 for shpfile in Path(shapefiles_dir).rglob('*.shp'):
                     shapefile = Shapefile(shapefiles_dir, shpfile.name)
-                    csvfile = shapefile.read_shape_file(datatype, rasterdata, data)
+                    csvfile = shapefile.read_shape_file(datatype, rasterdata, data, self.minVal)
                     csvfile = np.array(csvfile)
 
                     output = OutputFile(output_dir, shapefile.getDirName(), self.name, datatype, observation_date)

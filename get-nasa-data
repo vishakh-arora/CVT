@@ -78,7 +78,7 @@ SPIN_PID=$!
 # Kill the spinner on any signal, including ^C
 trap "kill -9 $SPIN_PID" `seq 0 15`
 
-wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -np -r -nd -R "index.html*","*.xml" -A ${MATCHES}\
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -np -r -nd -R "index.html*","*.xml" -A ${MATCHES} \
 	--directory-prefix=${OUTPUT_DIR} --content-disposition ${URL} >> /tmp/data.log 2>&1
 sleep 1
 rm -f ${OUTPUT_DIR}/robots.txt*

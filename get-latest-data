@@ -4,9 +4,6 @@ FILENAME=
 regex=
 INSTALL_DIR=$(dirname $0)
 DATA_DIR="/home/centos/data/covid19"
-if test -f "~/.dataproc.env" ; then
-  . ~/.dataproc.env
-fi
 
 MERRA_path=${DATA_DIR}/temperature_humidity/hourly/
 OMI_AURA_path=${DATA_DIR}/OMNO2d_003/
@@ -57,7 +54,7 @@ get_latest_data()
     then
       break;
     else
-      echo "${data_path}${new_tail}" >> "${txt_file}"
+      echo "${new_tail}" >> "${txt_file}"
     fi
   done
 }
@@ -76,21 +73,19 @@ conda activate gdal
 
 # Process the data
 echo -e "\n================ PROCESSING DATA ================\n" >> /tmp/data.log
-/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_temperature >> /tmp/data.log 2>&1
-/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_humidity >> /tmp/data.log 2>&1
-/home/centos/CVT-CGA/MERRA2-IMERG-conversions/hourly_to_daily_precipitation >> /tmp/data.log 2>&1
+/home/centos/CVT-CGA/hourly_to_daily_conversions/HourlyToDaily >> /tmp/data.log 2>&1
 
-
-#echo -e "\n================ CONVERTING DATA TO CSV ================\n" >> /tmp/data.log
-#/home/centos/bin/processEnvFactors -f 'NO2' -d '${DATA_DIR}/OMNO2d.003/daily/new_files.txt' >> /tmp/data.log 2>&1
-#/home/centos/bin/processEnvFactors -f 'Humidity' -d '${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt' >> /tmp/data.log 2>&1
-#/home/centos/bin/processEnvFactors -f 'Temper_T2MMEAN' -d '${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt' >> /tmp/data.log 2>&1
-#/home/centos/bin/processEnvFactors -f 'Precipitation' -d '${DATA_DIR}/precipitation/daily/new_files.txt' >> /tmp/data.log 2>&1
+echo -e "\n================ CONVERTING DATA TO CSV ================\n" >> /tmp/data.log
+/home/centos/bin/CVT/processEnvFactors -f 'NO2' -d "${DATA_DIR}/OMNO2d_003/new_files.txt" >> /tmp/data.log 2>&1
+/home/centos/bin/CVT/processEnvFactors -f 'Humidity' -d "${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt" >> /tmp/data.log 2>&1
+/home/centos/bin/CVT/processEnvFactors -f 'Temper_T2MMEAN' -d "${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt" >> /tmp/data.log 2>&1
+/home/centos/bin/CVT/processEnvFactors -f 'Precipitation' -d "${DATA_DIR}/precipitation/daily/new_files.txt" >> /tmp/data.log 2>&1
 
 > "${MERRA_path}/new_files.txt"
 > "${HDF5_path}/new_files.txt"
 > "${OMI_AURA_path}/new_files.txt"
-#> '${DATA_DIR}/OMNO2d.003/daily/new_files.txt'
-#> '${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt'
-#> '${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt'
-#> '${DATA_DIR}/precipitation/daily/new_files.txt'
+
+> "${DATA_DIR}/OMNO2d_003/new_files.txt"
+> "${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt"
+> "${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt"
+> "${DATA_DIR}/precipitation/daily/new_files.txt"
