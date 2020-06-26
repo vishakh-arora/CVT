@@ -1,15 +1,9 @@
 #!/bin/bash
 
+
 regex=
 INSTALL_DIR=$(dirname $0)
-#DATA_DIR="/home/centos/data/covid19"
-#CONVERSIONS_DIR="/home/centos/bin/CVT"
-DATA_DIR="/home/varora/data/"
-CONVERSIONS_DIR="/home/varora/CVT/"
-# DATA_DIR="/Users/vishakh/Documents/12th_Grade/CVT-CGA/data"
-# CONVERSIONS_DIR="/Users/vishakh/Documents/12th_Grade/CVT-CGA/CVT"
-# log_file=/tmp/data.log
-log_file=/home/varora/data.log
+source $INSTALL_DIR/config.py
 
 MERRA_hourly_path=${DATA_DIR}/temperature_humidity/hourly/
 HDF5_hourly_path=${DATA_DIR}/precipitation/hourly_hdf5/
@@ -78,7 +72,7 @@ conda activate gdal
 # Run the above functions
 get_latest_data ${OMI_AURA_daily_path} "OMI-Aura_L3" "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aura_OMI_Level3/OMNO2d.003/%Y/" "OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-"
 if test $? -eq 0; then
-    ${CONVERSIONS_DIR}/processEnvFactors -f 'NO2' -d "${OMI_AURA_daily_path}/new_files.txt" >> ${log_file} 2>&1
+    ${INSTALL_DIR}/processEnvFactors -f 'NO2' -d "${OMI_AURA_daily_path}/new_files.txt" >> ${log_file} 2>&1
     if test $? -eq 0; then
         > "${OMI_AURA_daily_path}/new_files.txt"
     fi
@@ -86,13 +80,13 @@ fi
 
 get_latest_data ${MERRA_hourly_path} "MERRA2_400" "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/MERRA2/M2T1NXSLV.5.12.4/%Y/%m/" "MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d.nc4"
 if test $? -eq 0; then
-    ${CONVERSIONS_DIR}/HourlyToDaily >> ${log_file} 2>&1
+    ${INSTALL_DIR}/HourlyToDaily >> ${log_file} 2>&1
     if test $? -eq 0; then
         > "${MERRA_hourly_path}/new_files.txt"
-        ${CONVERSIONS_DIR}/processEnvFactors -f 'Humidity' -d "${humidity_daily_path}/new_files.txt" >> ${log_file} 2>&1
+        ${INSTALL_DIR}/processEnvFactors -f 'Humidity' -d "${humidity_daily_path}/new_files.txt" >> ${log_file} 2>&1
         if test $? -eq 0; then
             > "${humidity_daily_path}/new_files.txt"
-            ${CONVERSIONS_DIR}/processEnvFactors -f 'Temper_T2MMEAN' -d "${temp_daily_path}/new_files.txt" >> ${log_file} 2>&1
+            ${INSTALL_DIR}/processEnvFactors -f 'Temper_T2MMEAN' -d "${temp_daily_path}/new_files.txt" >> ${log_file} 2>&1
             if test $? -eq 0; then
                 > "${temp_daily_path}/new_files.txt"
             fi
@@ -104,11 +98,11 @@ fi
 get_latest_data ${HDF5_hourly_path} "3B-HHR-E" "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.06/%Y/%j/" "3B-HHR-E.MS.MRG.3IMERG.%Y%m%d-S%H%M%S" 30
 if test $? -eq 0; then
     # Convert hourly data to daily data
-    ${CONVERSIONS_DIR}/HourlyToDaily >> ${log_file} 2>&1
+    ${INSTALL_DIR}/HourlyToDaily >> ${log_file} 2>&1
     if test $? -eq 0; then
         # Convert daily files to CSVs (shapefile corresponding)
         > "${HDF5_hourly_path}/new_files.txt"
-        ${CONVERSIONS_DIR}/processEnvFactors -f 'Precipitation' -d "${HDF5_daily_path}/new_files.txt" >> ${log_file} 2>&1
+        ${INSTALL_DIR}/processEnvFactors -f 'Precipitation' -d "${HDF5_daily_path}/new_files.txt" >> ${log_file} 2>&1
         if test $? -eq 0; then
             # Clear all txt files so that yesterday's files are not processed again
             > "${HDF5_daily_path}/new_files.txt"

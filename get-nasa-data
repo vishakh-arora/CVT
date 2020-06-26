@@ -1,12 +1,15 @@
 #!/bin/bash
 
+INSTALL_DIR=${dirname $0}
+source ${INSTALL_DIR}/config.py
+
 # Set some default values:
 UNAME=
 PWD=
 URL=
 MATCHES=
 OUTPUT_DIR=
-log_file="/tmp/data.log"
+
 usage()
 {
   echo "Usage: $0 { -u | --username } username for authentication
