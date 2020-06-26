@@ -1,0 +1,63 @@
+#!/opt/anaconda3/envs/gdal/bin/python
+
+from DataFormats import *
+from ConversionIO import *
+
+# path variables
+DATA_DIR = '/home/centos/data/covid19/'
+HOURLY_TXT = 'new_files.txt'
+DAILY_TXT = 'new_files.txt'
+
+# object dictionary
+data_types = {'Humidity': TempHumid(
+                            Extract(os.path.join(DATA_DIR, 'temperature_humidity', 'hourly', ''),
+                                    HOURLY_TXT,
+                                    'MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d'),
+                            WriteFile(os.path.join(DATA_DIR, 'temperature_humidity', 'daily', 'humidity', ''),
+                                      DAILY_TXT,
+                                      'daily_QV2M',
+                                      'daily-2-meter_specific_humidity',
+                                      'kg kg-1',
+                                      'daily_MEAN_')
+                            ),
+              'Temperature': TempHumid(
+                            Extract(os.path.join(DATA_DIR, 'temperature_humidity', 'hourly', ''),
+                                    HOURLY_TXT,
+                                    'MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d'),
+                            WriteFile(os.path.join(DATA_DIR, 'temperature_humidity', 'daily', 'Temperature', ''),
+                                      DAILY_TXT,
+                                      'daily_T2M',
+                                      'daily-2-meter_temperature',
+                                      'K',
+                                      'daily_MEAN_T_')
+                            ),
+              'Precipitation': Precipitation(
+                            Extract(os.path.join(DATA_DIR, 'precipitation', 'hourly_hdf5', ''),
+                                    HOURLY_TXT,
+                                    '3B-HHR-E.MS.MRG.3IMERG.%Y%m%d'),
+                            WriteFile(os.path.join(DATA_DIR, 'precipitation', 'daily', ''),
+                                      DAILY_TXT,
+                                      'daily_precipitation',
+                                      'daily_precipitation',
+                                      'mm/hr',
+                                      'daily_precipitation_')
+                            )}
+
+# call process functions with objects
+data_types['Humidity'].process({
+'data_hourly':['QV2M'],
+'lats':['lat'],
+'lons':['lon']
+})
+
+data_types['Temperature'].process({
+'data_hourly':['T2M'],
+'lats':['lat'],
+'lons':['lon']
+})
+
+data_types['Precipitation'].process({
+'data_sub':['Grid', 'precipitationCal'],
+'lats':['Grid', 'lat'],
+'lons':['Grid', 'lon']
+})
