@@ -1,13 +1,20 @@
 #!/bin/bash
 
-FILENAME=
 regex=
 INSTALL_DIR=$(dirname $0)
 DATA_DIR="/home/centos/data/covid19"
+CONVERSIONS_DIR="/home/centos/bin/CVT"
+# DATA_DIR="/Users/vishakh/Documents/12th_Grade/CVT-CGA/data"
+# CONVERSIONS_DIR="/Users/vishakh/Documents/12th_Grade/CVT-CGA/CVT"
 
-MERRA_path=${DATA_DIR}/temperature_humidity/hourly/
-OMI_AURA_path=${DATA_DIR}/OMNO2d_003/
-HDF5_path=${DATA_DIR}/precipitation/hourly_hdf5/
+MERRA_hourly_path=${DATA_DIR}/temperature_humidity/hourly/
+OMI_AURA_hourly_path=${DATA_DIR}/OMNO2d_003/
+HDF5_hourly_path=${DATA_DIR}/precipitation/hourly_hdf5/
+
+humidity_daily_path=${DATA_DIR}/temperature_humidity/daily/humidity/
+temp_daily_path=${DATA_DIR}/temperature_humidity/daily/Temperature/
+OMI_AURA_daily_path=${DATA_DIR}/OMNO2d_003/
+HDF5_daily_path=${DATA_DIR}/precipitation/daily/
 
 get_data()
 {
@@ -21,7 +28,7 @@ get_data()
   output=$(${INSTALL_DIR}/next-filename -f "$2" -e "$1" -d $5 "$3")
   new_name=$(echo ${output} | cut -d '|' -f1)
   new_url=$(echo ${output} | cut -d '|' -f2)
-  ${INSTALL_DIR}/get-nasa-data --username "Synyster" --password "Jaiganesh01$" -l ${new_url} --matches="*${new_name}*" -o $4 >> /tmp/data.log 2>&1
+  ${INSTALL_DIR}/get-nasa-data --username "Synyster" --password "Jaiganesh01$" -l ${new_url} --matches="*${new_name}*" -o $4 # >> /tmp/data.log 2>&1
 }
 
 get_latest_data()
@@ -40,7 +47,6 @@ get_latest_data()
     let duration=1*24*60;
   fi
 
-  # Clear the txt file so that yesterday's files are not processed again
   txt_file="${data_path}/new_files.txt"
 
   while true;
@@ -63,29 +69,30 @@ get_latest_data()
 > /tmp/data.log
 
 # Run the above functions
-get_latest_data ${MERRA_path} "MERRA2_400" "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/MERRA2/M2T1NXSLV.5.12.4/%Y/%m/" "MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d.nc4"
-get_latest_data ${OMI_AURA_path} "OMI-Aura_L3" "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aura_OMI_Level3/OMNO2d.003/%Y/" "OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-"
-get_latest_data ${HDF5_path} "3B-HHR-E" "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.06/%Y/%j/" "3B-HHR-E.MS.MRG.3IMERG.%Y%m%d-S%H%M%S" 30
+get_latest_data ${MERRA_hourly_path} "MERRA2_400" "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/MERRA2/M2T1NXSLV.5.12.4/%Y/%m/" "MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d.nc4"
+get_latest_data ${OMI_AURA_hourly_path} "OMI-Aura_L3" "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aura_OMI_Level3/OMNO2d.003/%Y/" "OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-"
+get_latest_data ${HDF5_hourly_path} "3B-HHR-E" "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.06/%Y/%j/" "3B-HHR-E.MS.MRG.3IMERG.%Y%m%d-S%H%M%S" 30
 
 # Activate the created gdal environment, which has python 3.8 installed
 eval "$(conda shell.bash hook)"
 conda activate gdal
 
 # Process the data
-echo -e "\n================ PROCESSING DATA ================\n" >> /tmp/data.log
-/home/centos/CVT-CGA/hourly_to_daily_conversions/HourlyToDaily >> /tmp/data.log 2>&1
+echo -e "\n================ PROCESSING DATA ================\n" # >> /tmp/data.log
+${CONVERSIONS_DIR}/HourlyToDaily # >> /tmp/data.log 2>&1
 
-echo -e "\n================ CONVERTING DATA TO CSV ================\n" >> /tmp/data.log
-/home/centos/bin/CVT/processEnvFactors -f 'NO2' -d "${DATA_DIR}/OMNO2d_003/new_files.txt" >> /tmp/data.log 2>&1
-/home/centos/bin/CVT/processEnvFactors -f 'Humidity' -d "${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt" >> /tmp/data.log 2>&1
-/home/centos/bin/CVT/processEnvFactors -f 'Temper_T2MMEAN' -d "${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt" >> /tmp/data.log 2>&1
-/home/centos/bin/CVT/processEnvFactors -f 'Precipitation' -d "${DATA_DIR}/precipitation/daily/new_files.txt" >> /tmp/data.log 2>&1
+echo -e "\n================ CONVERTING DATA TO CSV ================\n" # >> /tmp/data.log
+${CONVERSIONS_DIR}/processEnvFactors -f 'NO2' -d "${OMI_AURA_daily_path}/new_files.txt" # >> /tmp/data.log 2>&1
+${CONVERSIONS_DIR}/processEnvFactors -f 'Humidity' -d "${humidity_daily_path}/new_files.txt" # >> /tmp/data.log 2>&1
+${CONVERSIONS_DIR}/processEnvFactors -f 'Temper_T2MMEAN' -d "${temp_daily_path}/new_files.txt" # >> /tmp/data.log 2>&1
+${CONVERSIONS_DIR}/processEnvFactors -f 'Precipitation' -d "${HDF5_daily_path}/new_files.txt" # >> /tmp/data.log 2>&1
 
-> "${MERRA_path}/new_files.txt"
-> "${HDF5_path}/new_files.txt"
-> "${OMI_AURA_path}/new_files.txt"
+# Clear all txt files so that yesterday's files are not processed again
+> "${MERRA_hourly_path}/new_files.txt"
+> "${OMI_AURA_hourly_path}/new_files.txt"
+> "${HDF5_hourly_path}/new_files.txt"
 
-> "${DATA_DIR}/OMNO2d_003/new_files.txt"
-> "${DATA_DIR}/temperature_humidity/daily/humidity/new_files.txt"
-> "${DATA_DIR}/temperature_humidity/daily/Temperature/new_files.txt"
-> "${DATA_DIR}/precipitation/daily/new_files.txt"
+> "${OMI_AURA_daily_path}/new_files.txt"
+> "${humidity_daily_path}/new_files.txt"
+> "${temp_daily_path}/new_files.txt"
+> "${HDF5_daily_path}/new_files.txt"

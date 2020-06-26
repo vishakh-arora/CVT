@@ -88,4 +88,3 @@ printf "\nFinished! Data log can be viewed at /tmp/data.log\n"
 
 # Stop the spinner
 kill -9 $SPIN_PID
-
