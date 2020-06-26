@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALL_DIR=${dirname $0}
+INSTALL_DIR=$(dirname $0)
 source ${INSTALL_DIR}/config.py
 
 # Set some default values:

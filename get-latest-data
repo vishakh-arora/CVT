@@ -25,7 +25,7 @@ get_data()
   output=$(${INSTALL_DIR}/next-filename -f "$2" -e "$1" -d $5 "$3")
   new_name=$(echo ${output} | cut -d '|' -f1)
   new_url=$(echo ${output} | cut -d '|' -f2)
-  ${INSTALL_DIR}/get-nasa-data --username "Synyster" --password "Jaiganesh01$" -l ${new_url} --matches="*${new_name}*" -o $4 >> ${log_file} 2>&1
+  ${INSTALL_DIR}/get-nasa-data --username "Synyster" --password "Jaiganesh01$" -l ${new_url} --matches="*${new_name}*" -o $4 >> "${log_file}" 2>&1
 }
 
 get_latest_data()

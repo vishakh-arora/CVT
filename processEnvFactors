@@ -5,8 +5,8 @@ from pathlib import Path
 from EnvFactors import *
 from config import *
 
-csvs_dir = os.path.join(INSTALL_DIR, 'RESULT_CSVS', '')
-shapefiles_dir = os.path.join(INSTALL_DIR, 'shapefiles', '')
+csvs_dir = os.path.join( DATA_DIR, 'RESULT_CSVS', '')
+shapefiles_dir = os.path.join( DATA_DIR, 'shapefiles', '')
 
 env_factors = {'NO2': EnvironmentFactor(
                     'NO2',
