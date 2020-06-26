@@ -4,8 +4,11 @@ import sys, argparse
 from pathlib import Path
 from EnvFactors import *
 
-INSTALL_DIR = r'/home/centos/CVT-CGA/'
-DATA_DIR = r'/home/centos/data/covid19/'
+#INSTALL_DIR = r'/home/centos/CVT-CGA/'
+#DATA_DIR = r'/home/centos/data/covid19/'
+INSTALL_DIR = r'/home/varora/'
+DATA_DIR = r'/home/varora/data/'
+
 csvs_dir = os.path.join(INSTALL_DIR, 'RESULT_CSVS', '')
 shapefiles_dir = os.path.join(INSTALL_DIR, 'shapefiles', '')
 
@@ -45,6 +48,7 @@ def processFilesFrom(ef, inputFile):
     with open(inputFile, "r") as f:
         latestFiles = [file.strip() for file in f.readlines()]
         f.close()
+    print(latestFiles)
     env_factors[ef].process(latestFiles, shapefiles_dir, csvs_dir)
 
 if __name__ == "__main__":

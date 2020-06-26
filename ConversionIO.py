@@ -3,6 +3,7 @@ import numpy as np
 from scipy.io import netcdf
 from netCDF4 import Dataset
 from datetime import datetime
+from pathlib import Path
 import h5py
 
 ## TODO: Add support for reading other file types
@@ -42,7 +43,7 @@ class Extract:
         ---
         Return: <str '%Y%m%d'> Date. ex:'202006024'
         """
-        date = datetime.strptime(nc4_fname[:len(self.exp)+2], self.exp).strftime('%Y%m%d')
+        date = datetime.strptime(nc4_fname[:len(self.exp)+2], self.exp)
         return date
 
     def get_date_range(self):
@@ -66,10 +67,8 @@ class Extract:
         if date is None:
             return sorted(self.files), len(self.files)
         else:
-            files = []
-            for i in self.files:
-                if date == self.get_date(i):
-                    files.append(i)
+            files = list(Path(self.input_dir).rglob(f'*{date.strftime(self.exp)}*'))
+
             return sorted(files), len(files)
 
     def read_nc4(self, datasets, nc4_fname):

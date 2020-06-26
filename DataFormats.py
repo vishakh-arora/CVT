@@ -42,19 +42,12 @@ class TempHumid(AbstractDataFormatInit):
 
         # extract appropriate
         for i in tqdm(range(n_files), desc=f'Processing {self.Writer.var_name}'):
-            # ds_var = dataset_var.copy()
-            # ds_lat = dataset_lat.copy()
-            # ds_lon = dataset_lon.copy()
-
             dtemp = deepcopy(datasets)
 
             try:
                 file_current = files[i]
                 path = os.path.join(self.Extractor.input_dir, file_current)
-                # data_hourly = self.Extractor.read_nc4(ds_var, file_current)
-                #
-                # lats = self.Extractor.read_nc4(ds_lat, file_current)
-                # lons = self.Extractor.read_nc4(ds_lon, file_current)
+
                 dres = SimpleNamespace(**self.Extractor.read_nc4(dtemp, file_current))
                 data_hourly = dres.data_hourly
                 lats = dres.lats
@@ -68,7 +61,7 @@ class TempHumid(AbstractDataFormatInit):
             isif = average_data_day.shape
 
             # write out the nc4
-            outfile = self.Writer.netcdf(self.Extractor.get_date(file_current), average_data_day, lats, lons, isif)
+            outfile = self.Writer.netcdf(self.Extractor.get_date(file_current).strftime("%Y%m%d"), average_data_day, lats, lons, isif)
             content_paths.append(outfile+'\n')
 
         # write resultant files
@@ -109,20 +102,12 @@ class Precipitation(AbstractDataFormatInit):
 
             # extract appropriate
             for i in tqdm(range(n_files), desc=f'Processing {self.Writer.var_name} | {date}'):
-                # ds_var = dataset_var.copy()
-                # ds_lat = dataset_lat.copy()
-                # ds_lon = dataset_lon.copy()
-
                 dtemp = deepcopy(datasets)
 
                 try:
                     file_current = files[i]
                     path = os.path.join(self.Extractor.input_dir, file_current)
-                    # data_sub = self.Extractor.read_nc4(ds_var, file_current).squeeze()
-                    # data_sub = np.transpose(data_sub)
-                    #
-                    # lats = self.Extractor.read_nc4(ds_lat, file_current)
-                    # lons = self.Extractor.read_nc4(ds_lon, file_current)
+
                     dres = SimpleNamespace(**self.Extractor.read_nc4(dtemp, file_current))
                     data_sub = np.transpose(dres.data_sub.squeeze())
                     lats = dres.lats
@@ -142,7 +127,7 @@ class Precipitation(AbstractDataFormatInit):
             average_data_day = np.nanmean(data_day, axis=0)
 
             # write out the nc4
-            outfile = self.Writer.netcdf(date, average_data_day, lats, lons, isif)
+            outfile = self.Writer.netcdf(date.strftime("%Y%m%d"), average_data_day, lats, lons, isif)
             content_paths.append(outfile+'\n')
 
         # write resultant files

@@ -4,7 +4,8 @@ from DataFormats import *
 from ConversionIO import *
 
 # path variables
-DATA_DIR = '/home/centos/data/covid19/'
+#DATA_DIR = '/home/centos/data/covid19/'
+DATA_DIR = '/home/varora/data/'
 HOURLY_TXT = 'new_files.txt'
 DAILY_TXT = 'new_files.txt'
 
