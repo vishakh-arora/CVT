@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 regex=
 INSTALL_DIR=$(dirname $0)
 source $INSTALL_DIR/config.py
@@ -70,6 +69,8 @@ eval "$(conda shell.bash hook)"
 conda activate gdal
 
 # Run the above functions
+
+# Process NO2 Data
 get_latest_data ${OMI_AURA_daily_path} "OMI-Aura_L3" "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aura_OMI_Level3/OMNO2d.003/%Y/" "OMI-Aura_L3-OMNO2d_%Ym%m%d_v003-"
 if test $? -eq 0; then
     ${INSTALL_DIR}/processEnvFactors -f 'NO2' -d "${OMI_AURA_daily_path}/new_files.txt" >> ${log_file} 2>&1
@@ -78,6 +79,7 @@ if test $? -eq 0; then
     fi
 fi
 
+# Process temperature/humidity data
 get_latest_data ${MERRA_hourly_path} "MERRA2_400" "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/MERRA2/M2T1NXSLV.5.12.4/%Y/%m/" "MERRA2_400.tavg1_2d_slv_Nx.%Y%m%d.nc4"
 if test $? -eq 0; then
     ${INSTALL_DIR}/HourlyToDaily >> ${log_file} 2>&1
@@ -94,6 +96,7 @@ if test $? -eq 0; then
     fi
 fi
 
+# Process precipitation data
 # Download latest data according to the current data file
 get_latest_data ${HDF5_hourly_path} "3B-HHR-E" "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3/GPM_3IMERGHHE.06/%Y/%j/" "3B-HHR-E.MS.MRG.3IMERG.%Y%m%d-S%H%M%S" 30
 if test $? -eq 0; then
